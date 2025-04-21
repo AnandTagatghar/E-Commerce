@@ -4,7 +4,7 @@ const userService = createProxyMiddleware({
   target: process.env.USER_SERVICE_TARGET,
   changeOrigin: true,
   pathRewrite: {
-    "^/users": "",
+    "^/": "/api/v1/user-service/",
   },
 });
 
