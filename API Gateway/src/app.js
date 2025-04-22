@@ -1,15 +1,13 @@
-const { createProxyMiddleware } = require("http-proxy-middleware");
-const { userService } = require("./routers/http.proxy");
-const bodyParser = require("body-parser");
+require("dotenv").config();
 
 const express = require("express");
+const { userServiceProxy } = require("./routers/http.proxy");
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.text({ type: "*/*" }));
 
-app.use("/api/v1", userService);
+app.use("/api/v1", userServiceProxy);
 
 module.exports = app;

@@ -1,13 +1,22 @@
-const { createProxyMiddleware } = require("http-proxy-middleware");
+const proxy = require("express-http-proxy");
 
-const userService = createProxyMiddleware({
-  target: process.env.USER_SERVICE_TARGET,
-  changeOrigin: true,
-  pathRewrite: {
-    "^/": "/api/v1/user-service/",
+const userServiceProxy = proxy(process.env.USER_SERVICE_TARGET, {
+  proxyReqPathResolver: (req) => {
+    console.log(`Proxying request to: /api/v1/user-service${req.url}`);
+    return `/api/v1/user-service${req.url}`;
+  },
+
+  proxyReqBodyDecorator: (bodyContent, srcReq) => {
+    console.log("Request body:", bodyContent);
+    return bodyContent;
+  },
+
+  userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+    console.log("Response status:", proxyRes.statusCode);
+    return proxyResData;
   },
 });
 
 module.exports = {
-  userService,
+  userServiceProxy,
 };

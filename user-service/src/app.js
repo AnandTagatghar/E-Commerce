@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const { userRouter } = require("./routers/user.router");
+const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
 
@@ -10,8 +11,6 @@ app.use(cookieParser());
 
 app.use("/api/v1/user-service", userRouter);
 
-app.use((err, req, res, next) => {
-  res.send(err);
-});
+app.use(errorHandler);
 
 module.exports = app;
