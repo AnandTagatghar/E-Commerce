@@ -6,4 +6,4 @@ const asyncHandler = (requestHandler) => {
   };
 };
 
-module.exporst = asyncHandler;
+module.exports = asyncHandler;

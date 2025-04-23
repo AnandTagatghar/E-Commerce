@@ -19,12 +19,12 @@ const Auth = sequelize.define(
           msg: `Plese provide valid email format`,
         },
       },
-      password: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        validator: {
-          notNull: `Please provide password`,
-        },
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validator: {
+        notNull: `Please provide password`,
       },
     },
     refreshToken: {
@@ -33,7 +33,7 @@ const Auth = sequelize.define(
   },
   {
     timestamps: true,
-    tableName: `auth`,
+    tableName: `Auth`,
     hooks: {
       beforeCreate: async (record) => {
         if (record.password) {
@@ -57,7 +57,7 @@ Auth.prototype.generateRefreshToken = function () {
   return jwt.sign(
     { email: this.email, refreshToken: this.refreshToken },
     process.env.JWT_REFRESH_TOKEN_SECRET_KEY,
-    process.env.JWT_REFRESH_TOKEN_EXPIRY
+    { expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRY }
   );
 };
 
@@ -65,7 +65,7 @@ Auth.prototype.generateAccessToken = function () {
   return jwt.sign(
     { email: this.email, refreshToken: this.refreshToken },
     process.env.JWT_ACCESS_TOKEN_SECRET_KEY,
-    process.env.JWT_ACCESS_TOKEN_EXPIRY
+    { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRY }
   );
 };
 

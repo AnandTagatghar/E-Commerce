@@ -13,9 +13,16 @@ const registerUser = asyncHandler(async (req, res, next) => {
       throw new ApiError(400, `Required fields are missing`);
     }
 
-    const { username, fullName, email, profilePic } = req.body;
+    const { username, fullName, email, profilePic, role } = req.body;
 
-    if (!username || !fullName || !email || profilePic == undefined) {
+    if (
+      !username ||
+      role == undefined ||
+      !fullName ||
+      !email ||
+      profilePic == undefined ||
+      role == undefined
+    ) {
       throw new ApiError(400, `Required fields are missing`);
     }
 
@@ -33,6 +40,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
       username,
       fullname: fullName,
       email,
+      role,
       ...(profilePic
         ? {
             profilePicURL: uploadProfilePic.signedURL,
