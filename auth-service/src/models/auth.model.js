@@ -42,7 +42,7 @@ const Auth = sequelize.define(
       },
       beforeUpdate: async (record) => {
         if (record.changed("password")) {
-          record.password = await bcrypt.hash(record.password);
+          record.password = await bcrypt.hash(record.password, 10);
         }
       },
     },
@@ -55,7 +55,7 @@ Auth.prototype.isPasswordCorrect = async function (password) {
 
 Auth.prototype.generateRefreshToken = function () {
   return jwt.sign(
-    { email: this.email, refreshToken: this.refreshToken },
+    { email: this.email },
     process.env.JWT_REFRESH_TOKEN_SECRET_KEY,
     { expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRY }
   );
@@ -63,7 +63,7 @@ Auth.prototype.generateRefreshToken = function () {
 
 Auth.prototype.generateAccessToken = function () {
   return jwt.sign(
-    { email: this.email, refreshToken: this.refreshToken },
+    { email: this.email },
     process.env.JWT_ACCESS_TOKEN_SECRET_KEY,
     { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRY }
   );

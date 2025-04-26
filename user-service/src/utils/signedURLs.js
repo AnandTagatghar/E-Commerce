@@ -2,6 +2,7 @@ const {
   S3Client,
   GetObjectCommand,
   PutObjectCommand,
+  DeleteObjectCommand,
 } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const uuid = require("uuid").v4();
@@ -49,7 +50,22 @@ async function putObjectURL(extensionName) {
   return { signedURL, key };
 }
 
+async function deleteObject(key) {
+  try {
+    await s3Client.send(
+      new DeleteObjectCommand({
+        Bucket: process.env.BUCKET_NAME,
+        Key: key,
+      })
+    );
+    return true;
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
 module.exports = {
   getObjectURL,
   putObjectURL,
+  deleteObject,
 };
