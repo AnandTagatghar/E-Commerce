@@ -34,7 +34,23 @@ const authServiceProxy = proxy(process.env.AUTH_SERVICE_TARGET, {
   },
 });
 
+const productServiceProxy = proxy(process.env.PRODUCT_SERVICE_TARGET, {
+  proxyReqPathResolver: (req) => {
+    console.log(`Proxying requrest to: /api/v1/product-service${req.url}`);
+    return `/api/v1/product-service${req.url}`;
+  },
+  proxyReqBodyDecorator: (bodyContent, srcReq) => {
+    console.log(`Request body: ${bodyContent}`);
+    return bodyContent;
+  },
+  userResDecorator: (proxyRes, proxyResData, productReq, productRes) => {
+    console.log(`Response Status: ${proxyRes.statusCode}`);
+    return proxyResData;
+  },
+});
+
 module.exports = {
   userServiceProxy,
-  authServiceProxy
+  authServiceProxy,
+  productServiceProxy
 };

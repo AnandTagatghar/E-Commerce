@@ -7,6 +7,7 @@ const {
   updateUserDetails,
   updateUserRole,
   getProfilePicURL,
+  getUserDetails,
 } = require("../controllers/user.controller");
 const { verifyJWT } = require("../middlewares/auth.middleware");
 
@@ -23,6 +24,8 @@ router.route("/update-user-details").patch(verifyJWT, updateUserDetails);
 router.route("/update-user-role").patch(verifyJWT, updateUserRole);
 
 router.route("/get-profile-pic-url").get(verifyJWT, getProfilePicURL);
+
+router.route("/get-user-details").get(verifyJWT, getUserDetails);
 
 module.exports = {
   userRouter: router,

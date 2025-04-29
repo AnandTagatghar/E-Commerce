@@ -1,18 +1,16 @@
 const asyncHandler = require("../utils/asyncHandler");
-const ApiResponse = require("../utils/ApiResponse");
-const ApiError = require("../utils/ApiError");
 const axios = require("axios");
 const logger = require("../config/logger");
 
-const verifyJWT = asyncHandler(async (req, res, next) => {
+const verifyUser = asyncHandler(async (req, res, next) => {
   try {
-    logger.info(`Verify jwt token middleware hitted`);
+    logger.info(`Verify usre middleware got hitted`);
     let response = await axios.get(
-      `${process.env.AUTH_SERVICE_URI}/verify-token-call`,
+      `${process.env.USER_SERVICE_URI}/get-user-details`,
       {
         headers: {
           Cookie: Object.entries(req.cookies)
-            .map(([key, val]) => `${key}=${val}`)
+            .map(([key, value]) => `${key}=${value}`)
             .join("; "),
         },
       }
@@ -22,12 +20,13 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
       req.user = response.data.data;
       next();
     } else {
+      logger.info(`verify user service call response is false`);
       throw new ApiError(response.data.statusCode, response.data.message);
     }
   } catch (error) {
-    logger.error(`Error at verify jwt middleware: ${error.message}`);
+    logger.error(`Error in verify user middleware: ${error.message}`);
     next(error);
   }
 });
 
-module.exports = { verifyJWT };
+module.exports = { verifyUser };

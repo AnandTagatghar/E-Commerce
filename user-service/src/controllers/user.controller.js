@@ -259,6 +259,27 @@ const getProfilePicURL = asyncHandler(async (req, res, next) => {
   }
 });
 
+const getUserDetails = asyncHandler(async (req, res, next) => {
+  try {
+    logger.info(`Get user details controller got hitted`);
+    let user = await User.findByPk(req.user.email);
+
+    if (!user) throw new ApiError(404, `User not found`);
+
+    user = user.get({ plain: true });
+
+    delete user.password;
+    delete user.profilePicKey;
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, `User details fetched successfully`, user));
+  } catch (error) {
+    logger.error(`Error in get user details controller : ${error.message}`);
+    next(error);
+  }
+});
+
 module.exports = {
   registerUser,
   deleteYourAccount,
@@ -267,4 +288,5 @@ module.exports = {
   updateUserDetails,
   updateUserRole,
   getProfilePicURL,
+  getUserDetails
 };
