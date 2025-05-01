@@ -5,6 +5,7 @@ const logger = require("../config/logger");
 const Product = require("../models/product.model");
 const Review = require("../models/reviews.model");
 const mongoose = require("mongoose");
+const { setDataToRedis, getDataFromRedis } = require("../utils/redisFeatures");
 
 const createReview = asyncHandler(async (req, res, next) => {
   try {
@@ -139,6 +140,19 @@ const getReviewById = asyncHandler(async (req, res, next) => {
     const { review_id } = req.params;
     if (!req.params) throw new ApiError(400, `Required parameter is required`);
 
+    let cached = await getDataFromRedis(`review_${review_id}`);
+    if (cached) {
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            `Reviwe ID: ${review_id} fetched successfully`,
+            cached
+          )
+        );
+    }
+
     let review = await Review.aggregate([
       {
         $match: {
@@ -167,6 +181,8 @@ const getReviewById = asyncHandler(async (req, res, next) => {
     ]);
 
     if (!review) throw new ApiError(404, `Review Id: ${review_id} not found`);
+
+    await setDataToRedis(`review_${review_id}`, review);
 
     res
       .status(200)

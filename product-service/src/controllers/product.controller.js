@@ -5,6 +5,7 @@ const Product = require("../models/product.model");
 const { putObjectURL, deleteObject } = require("../utils/s3Features");
 const ApiResponse = require("../utils/ApiResponse");
 const mongoose = require("mongoose");
+const { setDataToRedis, getDataFromRedis } = require("../utils/redisFeatures");
 
 const uploadProduct = asyncHandler(async (req, res, next) => {
   try {
@@ -71,6 +72,12 @@ const getAllProducts = asyncHandler(async (req, res, next) => {
   try {
     logger.info(`Get all products controller got hitted`);
 
+    let cached = await getDataFromRedis("get_all_products");
+
+    if (cached) {
+      return res.status(200).json(new ApiResponse(200,`Products fetched successfully`,cached));
+    }
+
     const products = await Product.aggregate([
       {
         $lookup: {
@@ -109,6 +116,8 @@ const getAllProducts = asyncHandler(async (req, res, next) => {
     ]);
 
     if (products.length == 0) throw new ApiError(404, `No data to show`);
+
+    await setDataToRedis("get_all_products", products);
 
     res
       .status(200)
@@ -223,6 +232,19 @@ const getProductById = asyncHandler(async (req, res, next) => {
     const { product_id } = req.params;
     if (!product_id) throw new ApiError(400, `Required parameter is missing`);
 
+    let cached = await getDataFromRedis(`get_product_${product_id}`);
+    if (cached) {
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            `Product ID:${product_id} fetched successfully`,
+            cached
+          )
+        );
+    }
+
     let product = await Product.aggregate([
       {
         $match: {
@@ -267,7 +289,7 @@ const getProductById = asyncHandler(async (req, res, next) => {
     if (product.length == 0)
       throw new ApiError(404, `Product ID: ${product_id} not found`);
 
-    console.log(product);
+    await setDataToRedis(`get_product_${product_id}`, product);
 
     res
       .status(200)
