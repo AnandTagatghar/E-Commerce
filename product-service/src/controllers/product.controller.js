@@ -4,8 +4,7 @@ const ApiError = require("../utils/ApiError");
 const Product = require("../models/product.model");
 const { putObjectURL, deleteObject } = require("../utils/s3Features");
 const ApiResponse = require("../utils/ApiResponse");
-require("../models/reviews.model");
-require("../models/likes.model");
+const mongoose = require("mongoose");
 
 const uploadProduct = asyncHandler(async (req, res, next) => {
   try {
@@ -76,35 +75,19 @@ const getAllProducts = asyncHandler(async (req, res, next) => {
       {
         $lookup: {
           from: "likes",
-          localField: "likes",
-          foreignField: "_id",
+          localField: "_id",
+          foreignField: "product",
           as: "likes",
         },
       },
       {
         $lookup: {
           from: "reviews",
-          localField: "reviews",
-          foreignField: "_d",
+          localField: "_id",
+          foreignField: "product",
           as: "reviews",
-          pipeline: [
-            {
-              $addFields: {
-                number_of_likes: {
-                  $size: "$likes",
-                },
-              },
-            },
-            {
-              $project: {
-                likes: 0,
-                __v:0
-              }
-            }
-          ],
         },
       },
-
       {
         $addFields: {
           number_of_likes: {
@@ -115,11 +98,12 @@ const getAllProducts = asyncHandler(async (req, res, next) => {
           },
         },
       },
-
       {
         $project: {
           __v: 0,
           image_key: 0,
+          likes: 0,
+          reviews: 0,
         },
       },
     ]);
@@ -185,10 +169,7 @@ const updateProduct = asyncHandler(async (req, res, next) => {
         },
       },
       { new: true }
-    )
-      .populate({ path: "reviews", select: "-__v" })
-      .populate({ path: "likes", select: "-__v" })
-      .select("-__v -image_key");
+    ).select("-__v -image_key");
 
     if (!product) throw new ApiError(400, `This product is not available`);
 
@@ -235,9 +216,78 @@ const deleteProduct = asyncHandler(async (req, res, next) => {
   }
 });
 
+const getProductById = asyncHandler(async (req, res, next) => {
+  try {
+    logger.info(`Get product by id controller got hitted`);
+    if (!req.params) throw new ApiError(400, `Required parameters are missing`);
+    const { product_id } = req.params;
+    if (!product_id) throw new ApiError(400, `Required parameter is missing`);
+
+    let product = await Product.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(product_id),
+        },
+      },
+      {
+        $lookup: {
+          from: "likes",
+          localField: "_id",
+          foreignField: "product",
+          as: "likes",
+        },
+      },
+      {
+        $lookup: {
+          from: "reviews",
+          localField: "_id",
+          foreignField: "product",
+          as: "reviews",
+        },
+      },
+      {
+        $addFields: {
+          number_of_likes: {
+            $size: "$likes",
+          },
+          number_of_reviews: {
+            $size: "$reviews",
+          },
+        },
+      },
+      {
+        $project: {
+          reviews: 0,
+          likes: 0,
+          __v: 0,
+        },
+      },
+    ]);
+
+    if (product.length == 0)
+      throw new ApiError(404, `Product ID: ${product_id} not found`);
+
+    console.log(product);
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          `Product ID:${product_id} fetched successfully`,
+          product
+        )
+      );
+  } catch (error) {
+    logger.error(`Error on get product by id controller: ${error.message}`);
+    next(error);
+  }
+});
+
 module.exports = {
   uploadProduct,
   getAllProducts,
   updateProduct,
   deleteProduct,
+  getProductById,
 };

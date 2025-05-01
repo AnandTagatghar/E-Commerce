@@ -4,6 +4,7 @@ const ApiResponse = require("../utils/ApiResponse");
 const logger = require("../config/logger");
 const Product = require("../models/product.model");
 const Review = require("../models/reviews.model");
+const mongoose = require("mongoose");
 
 const createReview = asyncHandler(async (req, res, next) => {
   try {
@@ -28,10 +29,8 @@ const createReview = asyncHandler(async (req, res, next) => {
       email: req.user.email,
       comment,
       rating,
+      product: product_id,
     });
-
-    product.reviews.push(review._id);
-    await product.save();
 
     res
       .status(200)
@@ -66,12 +65,31 @@ const editReviewById = asyncHandler(async (req, res, next) => {
 
     review.comment = comment;
     review.rating = rating;
-    let newReview = await review.save();
+    await review.save();
 
-    newReview = newReview.toObject();
-    newReview.number_of_likes = newReview.likes.length;
-    delete newReview.likes;
-    delete newReview.__v;
+    let newReview = await Review.aggregate([
+      {
+        $lookup: {
+          from: "likes",
+          localField: "_id",
+          foreignField: "reivew",
+          as: "likes",
+        },
+      },
+      {
+        $addFields: {
+          number_of_likes: {
+            $size: "$likes",
+          },
+        },
+      },
+      {
+        $project: {
+          likes: 0,
+          __v: 0,
+        },
+      },
+    ]);
 
     res
       .status(200)
@@ -82,9 +100,92 @@ const editReviewById = asyncHandler(async (req, res, next) => {
   }
 });
 
+const deleteReviewById = asyncHandler(async (req, res, next) => {
+  try {
+    logger.info(`Delete review controller got hitted`);
+    if (!req.params) throw new ApiError(400, `Requried parameters is missing`);
+    const { review_id } = req.params;
+    if (!review_id) throw new ApiError(400, `Required parameter is missing`);
 
+    let review = await Review.findById(review_id);
+
+    if (!review) throw new ApiError(404, `Review ID: ${review_id} not found`);
+
+    if (review.email != req.user.email)
+      throw new ApiError(403, `You are not authorized for this action`);
+
+    review = await Review.deleteOne(review._id);
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          `Review ID: ${review_id} deleted successfully`,
+          review
+        )
+      );
+  } catch (error) {
+    logger.error(`Error in delete review controller: ${error.message}`);
+    next(error);
+  }
+});
+
+const getReviewById = asyncHandler(async (req, res, next) => {
+  try {
+    logger.info(`Get review by id controller got hitted`);
+
+    if (!req.params) throw new ApiError(400, `Requried parameters are missing`);
+    const { review_id } = req.params;
+    if (!req.params) throw new ApiError(400, `Required parameter is required`);
+
+    let review = await Review.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(review_id),
+        },
+      },
+      {
+        $lookup: {
+          from: "likes",
+          localField: "_id",
+          foreignField: "review",
+          as: "reviews",
+        },
+      },
+      {
+        $addFields: {
+          number_of_likes: { $size: "$reviews" },
+        },
+      },
+      {
+        $project: {
+          reviews: 0,
+          __v: 0,
+        },
+      },
+    ]);
+
+    if (!review) throw new ApiError(404, `Review Id: ${review_id} not found`);
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          `Reviwe ID: ${review_id} fetched successfully`,
+          review
+        )
+      );
+  } catch (error) {
+    logger.error(`Error on get review by id controller: ${error.message}`);
+    next(error);
+  }
+});
 
 module.exports = {
   createReview,
   editReviewById,
+  deleteReviewById,
+  getReviewById,
 };

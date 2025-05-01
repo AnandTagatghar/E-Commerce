@@ -1,5 +1,6 @@
 const { Schema, model } = require("mongoose");
 const Review = require("./reviews.model");
+const Like = require("./likes.model");
 
 const Product = new Schema(
   {
@@ -55,8 +56,6 @@ const Product = new Schema(
       max: 5,
       default: 0,
     },
-    reviews: [{ type: Schema.Types.ObjectId, ref: "Review" }],
-    likes: [{ type: Schema.Types.ObjectId, ref: "Like" }],
     is_active: {
       type: Boolean,
       default: false,
@@ -66,9 +65,18 @@ const Product = new Schema(
 );
 
 Product.pre("findOneAndDelete", async function (next) {
-  const product = await this.model.findOne(this.getFilter());
-  if (product) {
-    await Review.deleteMany({ _id: { $in: product.reviews } });
+  const review = await this.model.findOne(this.getFilter());
+  console.log(this.getFilter());
+  if (review) {
+    await Review.deleteMany({ product: review._id });
+  }
+  next();
+});
+
+Product.pre("findOneAndDelete", async function (next) {
+  const doc = await this.model.findOne(this.getFilter());
+  if (doc) {
+    await Like.deleteMany({ product: doc._id });
   }
   next();
 });
