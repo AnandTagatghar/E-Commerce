@@ -1,4 +1,4 @@
-// require("dotenv").config();
+require("dotenv").config();
 const app = require("./app");
 const { connect_db_with_retries } = require("./config/db");
 const logger = require("./config/logger");

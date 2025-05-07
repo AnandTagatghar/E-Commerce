@@ -5,3 +5,4 @@
   Auth Service -> 3002
   Product Service -> 3003
   Order Service -> 3004
+  Cart Service -> 3005
