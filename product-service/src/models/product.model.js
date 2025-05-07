@@ -65,8 +65,7 @@ const Product = new Schema(
 );
 
 Product.pre("findOneAndDelete", async function (next) {
-  const review = await this.model.findOne(this.getFilter());
-  console.log(this.getFilter());
+  const review = await this.model.findOne(this.getQuery());
   if (review) {
     await Review.deleteMany({ product: review._id });
   }
@@ -74,7 +73,7 @@ Product.pre("findOneAndDelete", async function (next) {
 });
 
 Product.pre("findOneAndDelete", async function (next) {
-  const doc = await this.model.findOne(this.getFilter());
+  const doc = await this.model.findOne(this.getQuery());
   if (doc) {
     await Like.deleteMany({ product: doc._id });
   }

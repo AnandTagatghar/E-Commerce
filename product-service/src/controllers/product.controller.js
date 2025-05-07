@@ -75,7 +75,9 @@ const getAllProducts = asyncHandler(async (req, res, next) => {
     let cached = await getDataFromRedis("get_all_products");
 
     if (cached) {
-      return res.status(200).json(new ApiResponse(200,`Products fetched successfully`,cached));
+      return res
+        .status(200)
+        .json(new ApiResponse(200, `Products fetched successfully`, cached));
     }
 
     const products = await Product.aggregate([
@@ -93,6 +95,32 @@ const getAllProducts = asyncHandler(async (req, res, next) => {
           localField: "_id",
           foreignField: "product",
           as: "reviews",
+          pipeline: [
+            {
+              $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "review",
+                as: "likes",
+              },
+            },
+            {
+              $addFields: {
+                number_of_likes: { $size: "$likes" },
+              },
+            },
+            {
+              $project: {
+                __v: 0,
+                likes: 0,
+              },
+            },
+            {
+              $sort: {
+                createdAt: -1,
+              },
+            },
+          ],
         },
       },
       {
@@ -103,6 +131,23 @@ const getAllProducts = asyncHandler(async (req, res, next) => {
           number_of_reviews: {
             $size: "$reviews",
           },
+          average_rating: {
+            $cond: [
+              {
+                $gt: [{ $size: "$reviews" }, 0],
+              },
+              {
+                $avg: {
+                  $map: {
+                    input: "$reviews",
+                    as: "review",
+                    in: "$$review.rating",
+                  },
+                },
+              },
+              0,
+            ],
+          },
         },
       },
       {
@@ -110,7 +155,11 @@ const getAllProducts = asyncHandler(async (req, res, next) => {
           __v: 0,
           image_key: 0,
           likes: 0,
-          reviews: 0,
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1,
         },
       },
     ]);

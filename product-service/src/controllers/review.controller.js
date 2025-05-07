@@ -164,17 +164,17 @@ const getReviewById = asyncHandler(async (req, res, next) => {
           from: "likes",
           localField: "_id",
           foreignField: "review",
-          as: "reviews",
+          as: "likes",
         },
       },
       {
         $addFields: {
-          number_of_likes: { $size: "$reviews" },
+          number_of_likes: { $size: "$likes" },
         },
       },
       {
         $project: {
-          reviews: 0,
+          likes: 0,
           __v: 0,
         },
       },

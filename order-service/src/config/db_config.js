@@ -2,19 +2,19 @@ const mongoose = require("mongoose");
 const logger = require("./logger");
 const { database_name } = require("../constants");
 
-async function db_connection() {
+async function connect_to_db() {
   try {
     await mongoose
       .connect(`${process.env.MONGODB_URI}/${database_name}`)
       .then(() => {
-        logger.info(`Mongo DB connection success`);
+        logger.info(`Connecting to MongoDB success`);
       })
       .catch((err) => {
-        throw new Error(err);
+        logger.error(`Error connecting to MongoDB: ${err.message}`);
       });
   } catch (error) {
-    logger.error(`Error in Mongo DB connection: ${error.message}`);
+    logger.error(`Error connecting to MongoDB: ${error.message}`);
   }
 }
 
-module.exports = { db_connection };
+module.exports = connect_to_db;

@@ -1,19 +1,17 @@
-require("dotenv").config();
+// require("dotenv").config();
 const app = require("./app");
-const sequelize = require("./config/db");
+const { connect_db_with_retries } = require("./config/db");
 const logger = require("./config/logger");
 
-sequelize
-  .authenticate()
-  .then(() => {
-    logger.info(`DB Connection success`);
-
+(async () => {
+  try {
+    await connect_db_with_retries();
     app.listen(process.env.PORT, () => {
       logger.info(
         `Server listening at port : http://localhost:${process.env.PORT}`
       );
     });
-  })
-  .catch((err) => {
-    logger.error(`Error in DB Connection: ${err}`);
-  });
+  } catch (error) {
+    logger.error(`Error connecting to DB: ${error.message}`);
+  }
+})();

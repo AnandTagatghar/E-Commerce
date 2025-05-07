@@ -4,3 +4,4 @@
   User Service -> 3001
   Auth Service -> 3002
   Product Service -> 3003
+  Order Service -> 3004
