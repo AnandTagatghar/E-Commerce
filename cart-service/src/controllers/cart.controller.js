@@ -62,8 +62,8 @@ const getCartByUser = asyncHander(async (req, res, next) => {
             },
           },
         },
-      }
-    ])
+      },
+    ]);
 
     if (!cart || cart.length === 0) {
       throw new ApiError(404, "Cart not found");
@@ -81,8 +81,8 @@ const getCartByUser = asyncHander(async (req, res, next) => {
 const addProductToCart = asyncHander(async (req, res, next) => {
   try {
     logger.info(`Add product to cart controller hitted`);
-    if (!req.body) throw new ApiError(400, "Product not found");
-    const { product_id } = req.body;
+    if (!req.params) throw new ApiError(400, "Product not found");
+    const { product_id } = req.params;
     if (!product_id) throw new ApiError(400, "Product id required");
 
     let product = await axios.get(
@@ -151,8 +151,9 @@ const addProductToCart = asyncHander(async (req, res, next) => {
 const removeProductFromCart = asyncHander(async (req, res, next) => {
   try {
     logger.info(`Remove product from cart controller hitted`);
+    if (!req.params) throw new ApiError(400, "Required product id");
     const { product_id } = req.params;
-    if (!product_id) throw new ApiError(400, "Product not found");
+    if (!product_id) throw new ApiError(400, "Product id not found");
 
     const cart = await Cart.findOne({
       email: req.user.email,
@@ -162,13 +163,36 @@ const removeProductFromCart = asyncHander(async (req, res, next) => {
       throw new ApiError(404, "Cart not found");
     }
 
-    const cart_item = await CartItem.findOneAndDelete({
+    const cart_item = await CartItem.findOne({
       cartID: cart._id,
       productId: product_id,
     });
 
     if (!cart_item) {
       throw new ApiError(404, "Product not found in cart");
+    }
+
+    if (cart_item.quantity > 1) {
+      cart_item.price = cart_item.price - cart_item.price / cart_item.quantity;
+      cart_item.quantity -= 1;
+      await cart_item.save();
+
+      delete cart_item._doc.__v;
+
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            "Product quantity updated in cart successfully",
+            cart_item
+          )
+        );
+    } else {
+      await CartItem.findOneAndDelete({
+        cartID: cart._id,
+        productId: product_id,
+      });
     }
 
     res

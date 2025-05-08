@@ -1,4 +1,5 @@
 const { Schema, model } = require("mongoose");
+const CartItem = require("./cartItems.model");
 
 const cartSchema = new Schema(
   {
@@ -23,11 +24,9 @@ const cartSchema = new Schema(
 );
 
 cartSchema.pre("findOneAndDelete", async function (next) {
-  const cart = this;
-  const CartItem = require("./cartItems.model");
-  const cartItems = await CartItem.find({ cartID: cart._id });
-  if (cartItems.length > 0) {
-    await CartItem.deleteMany({ cartID: cart._id });
+  const cartItems = await this.model.findOne(this.getQuery());
+  if (cartItems) {
+    await CartItem.deleteMany({ cartID: cartItems._id });
   }
   next();
 })

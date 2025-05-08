@@ -13,8 +13,8 @@ const cartItemSchema = new Schema(
     },
     quantity: {
       type: Number,
-      default: 1,
-      min: 1,
+      default: 0,
+      min: 0,
     },
     price: {
       type: Number,
