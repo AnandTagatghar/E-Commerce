@@ -8,6 +8,7 @@ const connect_to_db = async () => {
     logger.info(`Connection to MongoDB success`);
   } catch (error) {
     logger.error(`Error connecting MongoDB: ${error.message}`);
+    throw new Error(`Error connecting MongoDB: ${error.message}`);
   }
 };
 

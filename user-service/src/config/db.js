@@ -32,6 +32,10 @@ const connect_db_with_retries = async (
       retries--;
     }
   }
+
+  throw new Error(
+    `Unable to connect to the database after ${database_retries} attempts`
+  );
 };
 
 module.exports = { sequelize, connect_db_with_retries };

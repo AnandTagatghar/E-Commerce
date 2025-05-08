@@ -14,6 +14,7 @@ async function db_connection() {
       });
   } catch (error) {
     logger.error(`Error in Mongo DB connection: ${error.message}`);
+    throw new Error(`Error in Mongo DB connection: ${error.message}`);
   }
 }
 

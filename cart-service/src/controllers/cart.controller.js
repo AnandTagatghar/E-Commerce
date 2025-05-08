@@ -5,10 +5,29 @@ const logger = require("../config/logger");
 const asyncHander = require("../utils/asyncHandler");
 const CartItem = require("../models/cartItems.model");
 const axios = require("axios");
+const {
+  setRedisKey,
+  getRedisKey,
+  deleteRedisKey,
+} = require("../utils/redis.features");
 
 const getCartByUser = asyncHander(async (req, res, next) => {
   try {
     logger.info(`Get cart controller hitted`);
+
+    const cachedCart = await getRedisKey(`cart:${req.user.email}`);
+    if (cachedCart) {
+      logger.info(`Cart fetched from cache`);
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            "Cart fetched successfully",
+            JSON.parse(cachedCart)
+          )
+        );
+    }
 
     const cart = await Cart.aggregate([
       {
@@ -68,6 +87,8 @@ const getCartByUser = asyncHander(async (req, res, next) => {
     if (!cart || cart.length === 0) {
       throw new ApiError(404, "Cart not found");
     }
+
+    await setRedisKey(`cart:${req.user.email}`, JSON.stringify(cart));
 
     res
       .status(200)
@@ -216,6 +237,8 @@ const clearCart = asyncHander(async (req, res, next) => {
     if (!cart) {
       throw new ApiError(404, "Cart not found");
     }
+
+    await deleteRedisKey(`cart:${req.user.email}`);
 
     res.status(200).json(new ApiResponse(200, "Cart cleared successfully"));
   } catch (error) {

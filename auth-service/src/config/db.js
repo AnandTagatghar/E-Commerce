@@ -17,7 +17,10 @@ const sequelize = new Sequelize(
   }
 );
 
-const connect_db_with_retries = async (retries = database_retries, delay = database_delay) => {
+const connect_db_with_retries = async (
+  retries = database_retries,
+  delay = database_delay
+) => {
   while (retries > 0) {
     try {
       await sequelize.authenticate();
@@ -31,6 +34,10 @@ const connect_db_with_retries = async (retries = database_retries, delay = datab
       retries--;
     }
   }
+
+  throw new Error(
+    `Unable to connect to the database after ${database_retries} attempts`
+  );
 };
 
 module.exports = { sequelize, connect_db_with_retries };
