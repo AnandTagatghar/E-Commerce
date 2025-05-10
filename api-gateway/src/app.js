@@ -6,6 +6,7 @@ const {
   authServiceProxy,
   productServiceProxy,
   cartServiceProxy,
+  orderServiceProxy,
 } = require("./routers/http.proxy");
 
 const app = express();
@@ -17,5 +18,6 @@ app.use("/api/v1/user-service", userServiceProxy);
 app.use("/api/v1/auth-service", authServiceProxy);
 app.use("/api/v1/product-service", productServiceProxy);
 app.use("/api/v1/cart-service", cartServiceProxy);
+app.use("/api/v1/order-service", orderServiceProxy);
 
 module.exports = app;

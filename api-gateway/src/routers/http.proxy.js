@@ -66,9 +66,25 @@ const cartServiceProxy = proxy(process.env.CART_SERVICE_TARGET, {
   },
 });
 
+const orderServiceProxy = proxy(process.env.ORDER_SERVICE_TARGET, {
+  proxyReqPathResolver: (req) => {
+    console.log(`Proxying request to: /api/v1/order-service${req.url}`);
+    return `/api/v1/order-service${req.url}`;
+  },
+  proxyReqBodyDecorator: (bodyContent, srcReq) => {
+    console.log(`Request body: ${bodyContent}`);
+    return bodyContent;
+  },
+  userResDecorator: (proxyRes, proxyResData, orderReq, orderRes) => {
+    console.log(`Response status: ${proxyRes.statusCode}`);
+    return proxyResData;
+  },
+});
+
 module.exports = {
   userServiceProxy,
   authServiceProxy,
   productServiceProxy,
-  cartServiceProxy
+  cartServiceProxy,
+  orderServiceProxy
 };

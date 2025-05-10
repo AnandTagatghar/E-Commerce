@@ -10,10 +10,10 @@ async function connect_to_db() {
         logger.info(`Connecting to MongoDB success`);
       })
       .catch((err) => {
-        logger.error(`Error connecting to MongoDB: ${err.message}`);
+        throw new Error(`Error connecting to MongoDB: ${err.message}`);
       });
   } catch (error) {
-    logger.error(`Error connecting to MongoDB: ${error.message}`);
+    throw new Error(`Error connecting to MongoDB: ${error.message}`);
   }
 }
 
