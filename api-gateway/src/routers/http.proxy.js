@@ -81,10 +81,26 @@ const orderServiceProxy = proxy(process.env.ORDER_SERVICE_TARGET, {
   },
 });
 
+const paymentServiceProxy = proxy(process.env.PAYMENT_SERVICE_TARGET, {
+  proxyReqPathResolver: (req) => {
+    console.log(`Proxying request to: /api/v1/payment-service${req.url}`);
+    return `/api/v1/payment-service${req.url}`;
+  },
+  proxyReqBodyDecorator: (bodyContent, srcReq) => {
+    console.log(`Request body: ${bodyContent}`);
+    return bodyContent;
+  },
+  userResDecorator: (proxyRes, proxyResData, paymentReq, paymentRes) => {
+    console.log(`Response status: ${proxyRes.statusCode}`);
+    return proxyResData;
+  },
+});
+
 module.exports = {
   userServiceProxy,
   authServiceProxy,
   productServiceProxy,
   cartServiceProxy,
-  orderServiceProxy
+  orderServiceProxy,
+  paymentServiceProxy
 };
